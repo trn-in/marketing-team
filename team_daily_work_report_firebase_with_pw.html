@@ -1,0 +1,645 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Team Daily Work Report — Online (Firebase)</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#f3f8ff; --card:#ffffff; --accent:#2f6ce5; --muted:#61708a; --glass: rgba(255,255,255,0.75);
+    --success:#16a34a; --warn:#f59e0b; --danger:#ef4444;
+  }
+  *{box-sizing:border-box}
+  body{
+    font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
+    margin:0; padding:28px; background:linear-gradient(180deg,#e9f3ff 0%, #ffffff 60%);
+    color:#10203a;
+  }
+  .wrap{max-width:1100px;margin:0 auto}
+  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;gap:12px}
+  header h1{margin:0;font-size:20px}
+  header .sub{color:var(--muted);font-size:13px}
+
+  /* PENDING / STICKY BAR */
+  .pending-bar {
+    position: sticky;
+    top: 18px;
+    z-index: 60;
+    display:flex;
+    gap:10px;
+    align-items:center;
+    padding:10px;
+    margin-bottom:12px;
+    border-radius:10px;
+    background: linear-gradient(90deg, rgba(255,255,255,0.9), rgba(250,252,255,0.95));
+    box-shadow: 0 6px 18px rgba(16,32,58,0.06);
+    border:1px solid #eef6ff;
+  }
+  .pending-title{font-weight:700;color:#173c8f;font-size:14px;margin-right:8px}
+  .pending-list{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .pending-item{display:flex;gap:8px;align-items:center;padding:6px 8px;border-radius:999px;background:#fff;border:1px solid #eef6ff;box-shadow:0 2px 6px rgba(16,32,58,0.03)}
+  .pending-avatar{width:32px;height:32px;border-radius:8px;display:inline-flex;align-items:center;justify-content:center;background:#e8f1ff;color:#1453b9;font-weight:700;font-size:13px}
+  .pending-name{font-size:13px;color:#11428a}
+  .pending-count{font-size:13px;color:var(--muted);margin-left:auto}
+
+  /* layout */
+  .panel{background:var(--card);border-radius:14px;padding:14px;box-shadow:0 10px 30px rgba(39,76,163,0.06);margin-bottom:16px}
+  .two-col{display:grid;grid-template-columns:1fr 360px;gap:16px}
+  @media(max-width:980px){ .two-col{grid-template-columns:1fr} }
+
+  /* form */
+  form.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  @media(max-width:720px){ form.grid{grid-template-columns:1fr} }
+  label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+  input[type=text], select, textarea, input[type=date]{
+    width:100%;padding:10px;border-radius:10px;border:1px solid #e6eefc;font-size:14px;background:transparent;
+  }
+  textarea{min-height:80px;resize:vertical}
+  .row{display:flex;gap:8px}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 12px;border-radius:10px;border:0;background:var(--accent);color:#fff;font-weight:600;cursor:pointer}
+  .btn.ghost{background:transparent;color:var(--accent);border:1px solid #e7efff}
+  .btn.warn{background:var(--warn)}
+  .btn.danger{background:var(--danger)}
+  .muted{color:var(--muted);font-size:13px}
+
+  /* filters */
+  .filterbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px}
+  .filterbar input, .filterbar select{padding:8px;border-radius:8px;border:1px solid #e6eefc}
+
+  /* reports */
+  .reports-grid{display:grid;grid-template-columns:1fr;gap:12px}
+  .date-card{background:linear-gradient(180deg,#ffffff, #f7fbff);border-radius:12px;padding:12px;border:1px solid #eef6ff}
+  .date-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}
+  .date-title{font-weight:700;color:#173c8f}
+  .person-row{display:grid;grid-template-columns:1fr 120px;gap:10px;align-items:start;margin-bottom:8px;padding:10px;border-radius:10px;background:var(--glass);border:1px solid #f0f6ff}
+  @media(max-width:560px){ .person-row{grid-template-columns:1fr} .person-actions{margin-top:8px}}
+  .person-left{display:flex;flex-direction:column;gap:6px}
+  .person-head{display:flex;align-items:center;gap:10px}
+  .avatar{width:40px;height:40px;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;background:#e8f1ff;color:#1453b9;font-weight:700;font-size:14px}
+  .person-name{font-weight:700;color:#11428a}
+  .task-list{margin-top:6px}
+  .task-item{display:flex;justify-content:space-between;gap:10px;padding:8px;border-radius:8px;background:#fff;border:1px solid #eef6ff}
+  .task-meta{font-size:13px;color:var(--muted)}
+  .badge{display:inline-block;padding:4px 8px;border-radius:999px;font-size:12px;background:#eef6ff;color:#1453b9}
+
+  .person-actions{display:flex;gap:8px;align-items:center;justify-content:flex-end}
+  .teams-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: linear-gradient(135deg, #464EB8, #5B63E1);
+  color: white;
+  font-weight: 500;
+  padding: 6px 14px;
+  border: none;
+  border-radius: 30px;
+  cursor: pointer;
+  font-size: 13px;
+  box-shadow: 0 3px 10px rgba(91, 99, 225, 0.4);
+  transition: all 0.25s ease;
+  text-decoration: none;
+}
+.teams-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(91, 99, 225, 0.6);
+}
+.teams-btn svg {
+  width: 16px;
+  height: 16px;
+  fill: white;
+}
+
+  .small{font-size:13px;color:var(--muted)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+
+  /* footer */
+  .foot-row{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:10px}
+  .linkish{color:var(--accent);text-decoration:underline;cursor:pointer}
+
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Team Daily Work Report</h1>
+      <div class="sub">Online (Firestore) • Grouped by date → person → tasks • Quick Teams contact</div>
+    </div>
+    <div class="muted">v2 • Firestore</div>
+  </header>
+
+  <!-- PENDING / STICKY NAMES BAR (Shows members who haven't added today's report) -->
+  <div id="pendingBar" class="pending-bar" style="display:none">
+    <div class="pending-title">No report yet (Today):</div>
+    <div id="pendingList" class="pending-list"></div>
+    <div class="pending-count" id="pendingCount" style="margin-left:12px"></div>
+  </div>
+
+  <div class="panel two-col">
+    <!-- LEFT: Report list -->
+    <div id="left">
+      <div class="panel" style="margin-bottom:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="display:flex;flex-direction:column">
+            <div style="font-weight:700">Filters</div>
+            <div class="small muted">Filter by name, date or status</div>
+          </div>
+          <div class="controls">
+            <button class="btn ghost" id="exportCsvBtn">Export CSV</button>
+            <button class="btn ghost" id="resetFiltersBtn">Reset Filters</button>
+          </div>
+        </div>
+
+        <div style="height:12px"></div>
+        <div class="filterbar">
+          <select id="filterName">
+            <option value="">All Names</option>
+          </select>
+          <input type="date" id="filterDate" />
+          <select id="filterStatus">
+            <option value="">All Status</option>
+            <option>In Progress</option>
+            <option>Completed</option>
+            <option>Pending</option>
+          </select>
+          <input type="text" id="filterSearch" placeholder="Search project / task..." style="min-width:220px;padding:8px;border-radius:8px;border:1px solid #e6eefc"/>
+        </div>
+      </div>
+
+      <div id="reportsArea" class="reports-grid"></div>
+
+      <div class="foot-row">
+        <div class="small muted">Data saved in Firestore (task-manager-a4891)</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn danger" id="clearBtn">Clear All Data</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Form -->
+    <aside>
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-weight:700">New / Update Task</div>
+          <div class="small muted">Add multiple tasks per day per person</div>
+        </div>
+        <form id="taskForm">
+          <div class="grid">
+            <div>
+              <label>Team Member</label>
+              <select id="selName" required>
+                <option value="">Select Name</option>
+                <option>Raghul</option>
+                <option>Raj</option>
+                <option>Thangam</option>
+                <option>Robin</option>
+                <option>Saswatha</option>
+                <option>Bettina</option>
+                <option>Shehan</option>
+              </select>
+            </div>
+            <div>
+              <label>Project Name</label>
+              <input id="inpProject" type="text" placeholder="Project / Module" required />
+            </div>
+            <div style="grid-column:1 / -1">
+              <label>Work Description</label>
+              <textarea id="inpWork" placeholder="Short description..." required></textarea>
+            </div>
+            <div>
+              <label>Status</label>
+              <select id="selStatus" required>
+                <option>In Progress</option>
+                <option>Completed</option>
+                <option>Pending</option>
+              </select>
+            </div>
+            <div>
+              <label>Date</label>
+              <input id="inpDate" type="date" />
+            </div>
+            <div style="grid-column:1 / -1;display:flex;gap:8px;justify-content:flex-end">
+              <button class="btn" type="submit" id="addBtn">Add Task</button>
+              <button class="btn ghost" type="button" id="clearFormBtn">Clear</button>
+            </div>
+          </div>
+        </form>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="panel">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <div style="font-weight:700">Quick Actions</div>
+        </div>
+        <div style="margin-top:10px;display:flex;flex-direction:column;gap:8px">
+          <button class="btn" id="viewAllBtn">Show All (no filters)</button>
+          <button class="btn ghost" id="showTodayBtn">Show Today</button>
+          <button class="btn ghost" id="showMineBtn">Show My (Raghul)</button>
+        </div>
+        <div style="margin-top:12px;font-size:13px;color:var(--muted)">
+          Teams quick contacts are placeholders — edit emails in the script if needed.
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- Firebase SDK (compat build for simple migration) -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-firestore-compat.js"></script>
+
+<script>
+/* ====== FIREBASE CONFIG (corrected storageBucket) ====== */
+const firebaseConfig = {
+    apiKey: "AIzaSyA_uO4Si54UULuKn-mFksdv5NJoML8nJvM",
+    authDomain: "task-manager-a4891.firebaseapp.com",
+    projectId: "task-manager-a4891",
+    storageBucket: "task-manager-a4891.appspot.com",
+    messagingSenderId: "31224766915",
+    appId: "1:31224766915:web:03724e3ee0d8a0968d1d76"
+};
+
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
+const COLLECTION = 'reports_v2';
+
+/* ====== Data model ======
+Each report doc fields:
+  name, project, work, status, date (YYYY-MM-DD), createdAt (ISO string)
+Firestore doc id used as `id` in UI
+=================================*/
+
+const TEAM_EMAILS = {
+  "Raghul":"raghul@trainocate.com",
+  "Raj":"raj@trainocate.com",
+  "Thangam":"thangam@trainocate.com",
+  "Robin":"robin@trainocate.com",
+  "Saswatha":"saswatha@trainocate.com",
+  "Bettina":"bettina@trainocate.com",
+  "Shehan":"shehan@trainocate.com"
+};
+
+let reports = []; // will be kept in sync via snapshot
+
+// DOM refs
+const reportsArea = document.getElementById('reportsArea');
+const filterName = document.getElementById('filterName');
+const filterDate = document.getElementById('filterDate');
+const filterStatus = document.getElementById('filterStatus');
+const filterSearch = document.getElementById('filterSearch');
+
+const selName = document.getElementById('selName');
+const inpProject = document.getElementById('inpProject');
+const inpWork = document.getElementById('inpWork');
+const selStatus = document.getElementById('selStatus');
+const inpDate = document.getElementById('inpDate');
+const taskForm = document.getElementById('taskForm');
+
+const exportCsvBtn = document.getElementById('exportCsvBtn');
+const resetFiltersBtn = document.getElementById('resetFiltersBtn');
+const clearBtn = document.getElementById('clearBtn');
+const viewAllBtn = document.getElementById('viewAllBtn');
+const showTodayBtn = document.getElementById('showTodayBtn');
+const showMineBtn = document.getElementById('showMineBtn');
+const clearFormBtn = document.getElementById('clearFormBtn');
+
+const pendingBar = document.getElementById('pendingBar');
+const pendingList = document.getElementById('pendingList');
+const pendingCount = document.getElementById('pendingCount');
+
+function formatDate(d){
+  if(!d) return '';
+  const dt = new Date(d);
+  if (isNaN(dt)) return d;
+  return dt.toISOString().split('T')[0];
+}
+
+function escapeHtml(str=''){ return String(str).replace(/[&<>"'`=\/]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;','/':'&#47;','`':'&#96;','=':'&#61;'})[s]); }
+
+/* fill name filter */
+function populateNameFilter(){
+  const names = ["","Raghul","Raj","Thangam","Robin","Saswatha","Bettina","Shehan"];
+  filterName.innerHTML = names.map(n => `<option value="${n}">${n || 'All Names'}</option>`).join('');
+}
+populateNameFilter();
+
+/* ===== Pending bar (today) ===== */
+function updatePendingBar(){
+  const today = new Date().toISOString().slice(0,10);
+  const teamNames = Object.keys(TEAM_EMAILS);
+  const pending = teamNames.filter(name => {
+    return !reports.some(r => r.name === name && r.date === today);
+  });
+
+  pendingList.innerHTML = '';
+  if (pending.length === 0){
+    pendingBar.style.display = 'none';
+    pendingCount.textContent = '';
+    return;
+  }
+  pendingBar.style.display = 'flex';
+  pending.forEach(name=>{
+    const initials = (name.split(' ').map(s=>s[0]||'')[0] || name[0] || '').toUpperCase();
+    const item = document.createElement('div');
+    item.className = 'pending-item';
+    item.innerHTML = `<div class="pending-avatar">${initials}</div><div class="pending-name">${name}</div>`;
+    pendingList.appendChild(item);
+  });
+  pendingCount.textContent = `${pending.length} pending`;
+}
+
+/* ===== render UI grouped by date -> name ===== */
+function render(){
+  // apply filters
+  const nameF = filterName.value;
+  const dateF = filterDate.value;
+  const statusF = filterStatus.value;
+  const search = filterSearch.value.trim().toLowerCase();
+
+  const grouped = {};
+  reports.forEach(item=>{
+    if (nameF && item.name !== nameF) return;
+    if (dateF && item.date !== dateF) return;
+    if (statusF && item.status !== statusF) return;
+    if (search){
+      const hay = (item.project + ' ' + item.work + ' ' + item.name).toLowerCase();
+      if (!hay.includes(search)) return;
+    }
+    if (!grouped[item.date]) grouped[item.date] = {};
+    if (!grouped[item.date][item.name]) grouped[item.date][item.name] = [];
+    grouped[item.date][item.name].push(item);
+  });
+
+  const dates = Object.keys(grouped).sort((a,b)=> new Date(b) - new Date(a));
+  reportsArea.innerHTML = '';
+  if (dates.length === 0){
+    reportsArea.innerHTML = `<div class="panel small muted" style="padding:18px;text-align:center">No matching reports</div>`;
+    updatePendingBar();
+    return;
+  }
+
+  dates.forEach(date=>{
+    const dateCard = document.createElement('div');
+    dateCard.className = 'date-card';
+    const names = Object.keys(grouped[date]);
+    const totalTasks = names.reduce((s,n)=> s + grouped[date][n].length, 0);
+    dateCard.innerHTML = `
+      <div class="date-top">
+        <div>
+          <div class="date-title">${date}</div>
+          <div class="small muted">${names.length} person(s) • ${totalTasks} task(s)</div>
+        </div>
+        <div class="small muted"> </div>
+      </div>
+    `;
+
+    names.forEach(name=>{
+      const personTasks = grouped[date][name];
+      const personRow = document.createElement('div');
+      personRow.className = 'person-row';
+
+      // left
+      const left = document.createElement('div');
+      left.className = 'person-left';
+      const initials = name.split(' ').map(s=>s[0]||'')[0] || name[0] || '';
+      const head = document.createElement('div');
+      head.className = 'person-head';
+      head.innerHTML = `<div class="avatar">${initials}</div>
+        <div>
+          <div class="person-name">${name} <span class="badge" style="margin-left:6px">${personTasks.length}</span></div>
+          <div class="small muted">${personTasks.map(t=> t.project).filter((v,i,self)=>self.indexOf(v)===i).join(', ')}</div>
+        </div>`;
+      left.appendChild(head);
+
+      // tasks list
+      const taskList = document.createElement('div');
+      taskList.className = 'task-list';
+      personTasks.forEach(task=>{
+        const tdiv = document.createElement('div');
+        tdiv.className = 'task-item';
+        tdiv.innerHTML = `
+          <div style="flex:1">
+            <div style="font-weight:600">${escapeHtml(task.project)}</div>
+            <div class="task-meta">${escapeHtml(task.work)}</div>
+            <div class="task-meta" style="margin-top:6px"><span class="small">Added: ${new Date(task.createdAt).toLocaleString()}</span></div>
+          </div>
+          <div style="width:170px;display:flex;flex-direction:column;gap:6px;align-items:flex-end">
+            <div class="badge" style="background:${task.status==='Completed'?'#e6ffef':'#fff2e6'};color:${task.status==='Completed'? 'var(--success)':'#b77a00'}">${task.status}</div>
+            <div style="display:flex;gap:6px">
+              <button class="btn ghost" onclick="editTask('${task.id}')">Edit</button>
+              <button class="btn" onclick="deleteTask('${task.id}')" style="background:#ef4444">Delete</button>
+            </div>
+          </div>
+        `;
+        taskList.appendChild(tdiv);
+      });
+      left.appendChild(taskList);
+
+      // right: Teams
+      const right = document.createElement('div');
+      right.className = 'person-actions';
+      const email = TEAM_EMAILS[name] || '';
+      const teamsLink = `https://teams.microsoft.com/l/chat/0/0?users=${encodeURIComponent(email)}`;
+      const btnTeams = document.createElement('a');
+      btnTeams.className = 'teams-btn';
+      btnTeams.href = teamsLink;
+      btnTeams.target = '_blank';
+      btnTeams.rel = 'noopener';
+      btnTeams.innerHTML = `Teams • ${name}`;
+      right.appendChild(btnTeams);
+
+      personRow.appendChild(left);
+      personRow.appendChild(right);
+      dateCard.appendChild(personRow);
+    });
+
+    reportsArea.appendChild(dateCard);
+  });
+
+  updatePendingBar();
+}
+
+/* ===== Firestore sync ===== */
+function startRealtimeListener(){
+  db.collection(COLLECTION).orderBy('date', 'desc').onSnapshot(snapshot=>{
+    const arr = [];
+    snapshot.forEach(doc=>{
+      const data = doc.data();
+      arr.push({
+        id: doc.id,
+        name: data.name || '',
+        project: data.project || '',
+        work: data.work || '',
+        status: data.status || '',
+        date: data.date || formatDate(data.createdAt || new Date().toISOString()),
+        createdAt: data.createdAt || new Date().toISOString()
+      });
+    });
+    // keep reports global and render
+    reports = arr;
+    render();
+  }, err=>{
+    console.error('Firestore listener error', err);
+    // fallback: show error panel
+    reportsArea.innerHTML = `<div class="panel small muted" style="padding:18px;text-align:center;color:#b00">Unable to load reports (check Firebase config & network).</div>`;
+  });
+}
+startRealtimeListener();
+
+/* ===== CRUD with Firestore ===== */
+function addReportToFirestore(item){
+  // item: { name, project, work, status, date, createdAt }
+  return db.collection(COLLECTION).add(item);
+}
+
+
+function deleteTask(id){
+  // fetch the document to know the owner's name, then require owner's password to delete
+  if(!confirm('Delete this task?')) return;
+  const docRef = db.collection(COLLECTION).doc(id);
+  docRef.get().then(d=>{
+    if(!d.exists) return alert('Task not found');
+    const data = d.data() || {};
+    const owner = data.name || '';
+    const expected = (owner + '@143').trim();
+    const p = prompt(`Enter password to delete tasks for ${owner}:`);
+    if(p === null) return; // cancelled
+    if(p.trim() === expected){
+      docRef.delete().then(()=>{
+        // deleted, UI will update via snapshot
+      }).catch(err=>{
+        console.error(err);
+        alert('Delete failed');
+      });
+    } else {
+      alert('Incorrect password. You are not allowed to delete this task.');
+    }
+  }).catch(err=>{
+    console.error(err);
+    alert('Unable to verify task owner.');
+  });
+}
+
+
+function editTask(id){
+  // fetch the doc to be safe
+  const docRef = db.collection(COLLECTION).doc(id);
+  docRef.get().then(d=>{
+    if(!d.exists) return alert('Task not found');
+    const data = d.data();
+    const newProject = prompt('Project name:', data.project || '');
+    if (newProject === null) return;
+    const newWork = prompt('Work description:', data.work || '');
+    if (newWork === null) return;
+    const newStatus = prompt('Status (In Progress / Completed / Pending):', data.status || 'In Progress');
+    if (newStatus === null) return;
+    docRef.update({
+      project: newProject.trim(),
+      work: newWork.trim(),
+      status: newStatus.trim()
+    }).catch(err=>{
+      console.error(err);
+      alert('Update failed');
+    });
+  }).catch(err=>{
+    console.error(err);
+    alert('Unable to fetch task');
+  });
+}
+
+/* ===== form submit ===== */
+taskForm.addEventListener('submit', ev=>{
+  ev.preventDefault();
+  const name = selName.value;
+  const project = inpProject.value.trim();
+  const work = inpWork.value.trim();
+  const status = selStatus.value;
+  const date = inpDate.value || new Date().toISOString().split('T')[0];
+
+  if(!name || !project || !work || !status) return alert('Fill all fields');
+
+  const entry = {
+    name, project, work, status, date,
+    createdAt: new Date().toISOString()
+  };
+
+  addReportToFirestore(entry).then(()=> {
+    taskForm.reset();
+    inpDate.value = new Date().toISOString().slice(0,10);
+    // snapshot listener will automatically re-render
+  }).catch(err=>{
+    console.error(err);
+    alert('Add failed');
+  });
+});
+
+/* ===== filters + buttons ===== */
+filterName.addEventListener('change', render);
+filterDate.addEventListener('change', render);
+filterStatus.addEventListener('change', render);
+filterSearch.addEventListener('input', debounce(render, 250));
+
+resetFiltersBtn.addEventListener('click', ()=>{
+  filterName.value=''; filterDate.value=''; filterStatus.value=''; filterSearch.value='';
+  render();
+});
+
+exportCsvBtn.addEventListener('click', ()=>{
+  if(reports.length === 0) return alert('No data to export');
+  const headers = ['id','name','project','work','status','date','createdAt'];
+  const rows = [headers.join(',')];
+  reports.forEach(r=>{
+    rows.push([r.id, r.name, `"${(r.project||'').replace(/"/g,'""')}"`, `"${(r.work||'').replace(/"/g,'""')}"`, r.status, r.date, r.createdAt].join(','));
+  });
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `team_reports_${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+});
+
+clearBtn.addEventListener('click', async ()=>{
+  const p = prompt('Enter password to clear ALL data:');
+  if (p === 'Master@143') {
+    if (!confirm('Are you sure? This will permanently remove all reports from Firestore.')) return;
+    try {
+      // fetch all docs in collection and delete in batch (safe for small collections)
+      const snapshot = await db.collection(COLLECTION).get();
+      const batch = db.batch();
+      snapshot.forEach(doc => batch.delete(doc.ref));
+      await batch.commit();
+      alert('All data cleared.');
+    } catch (err){
+      console.error(err);
+      alert('Clear failed.');
+    }
+  } else if (p) {
+    alert('Incorrect password.');
+  }
+});
+
+viewAllBtn.addEventListener('click', ()=>{
+  filterName.value=''; filterDate.value=''; filterStatus.value=''; filterSearch.value=''; render();
+});
+showTodayBtn.addEventListener('click', ()=>{
+  filterDate.value = new Date().toISOString().slice(0,10);
+  filterName.value=''; filterStatus.value=''; filterSearch.value=''; render();
+});
+showMineBtn.addEventListener('click', ()=>{
+  filterName.value = 'Raghul'; filterDate.value=''; filterStatus.value=''; filterSearch.value=''; render();
+});
+clearFormBtn.addEventListener('click', ()=>{ taskForm.reset(); inpDate.value = new Date().toISOString().slice(0,10); });
+
+/* ===== helpers ===== */
+function debounce(fn, ms=200){ let t; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
+
+/* ===== init UI defaults ===== */
+(function init(){
+  inpDate.value = new Date().toISOString().slice(0,10);
+  filterDate.value = '';
+})();
+</script>
+</body>
+</html>

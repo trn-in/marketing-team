@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>A Message For You 💖</title>
+
+<style>
+/* ===== BASE ===== */
+body{
+  margin:0;
+  height:100vh;
+  background:
+    radial-gradient(circle at 20% 10%, #334155, transparent 40%),
+    radial-gradient(circle at 80% 20%, #1e293b, transparent 45%),
+    radial-gradient(circle at bottom, #020617, #020617);
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  font-family:'Poppins',sans-serif;
+  overflow:hidden;
+  color:#fff;
+  transition:background 2s ease;
+}
+
+/* ===== LOVE MODE ===== */
+body.love-mode{
+  background:
+    radial-gradient(circle at top, #ff9ecb, transparent 45%),
+    linear-gradient(135deg, #ff6fae, #ff9ecb, #ffd1e8);
+}
+
+/* ===== MOON ===== */
+.moon{
+  position:absolute;
+  top:60px;
+  right:90px;
+  width:90px;
+  height:90px;
+  background:#f8fafc;
+  border-radius:50%;
+  box-shadow:0 0 70px rgba(255,255,255,.8);
+  animation: moonGlow 4s ease-in-out infinite;
+  pointer-events:none;
+  transition:opacity 2s ease;
+}
+body.love-mode .moon{ opacity:0; }
+@keyframes moonGlow{
+  0%,100%{ box-shadow:0 0 50px rgba(255,255,255,.5) }
+  50%{ box-shadow:0 0 90px rgba(255,255,255,.9) }
+}
+
+/* ===== STARS ===== */
+.star{
+  position:absolute;
+  width:2px;height:2px;
+  background:white;
+  border-radius:50%;
+  opacity:.8;
+  animation: twinkle 3s infinite;
+  pointer-events:none;
+  transition:opacity 2s ease;
+}
+body.love-mode .star{ opacity:0; }
+@keyframes twinkle{ 0%,100%{opacity:.3}50%{opacity:1} }
+
+/* ===== ENVELOPE ===== */
+.envelope-wrap{
+  position:relative;
+  z-index:100;
+  animation: rise 2.5s cubic-bezier(.22,1,.36,1);
+  transition:opacity 1.5s ease;
+}
+body.love-mode .envelope-wrap{ opacity:0; }
+
+.envelope{
+  width:220px;height:140px;
+  background:linear-gradient(135deg,#ff6fae,#ff4f9a);
+  border-radius:14px;
+  position:relative;
+  box-shadow:0 35px 70px rgba(0,0,0,.6);
+  overflow:hidden;
+}
+.flap{
+  position:absolute; inset:0;
+  background:#ff3d8b;
+  clip-path:polygon(0 0,100% 0,50% 55%);
+  transform-origin:top;
+  transition:1s ease;
+  pointer-events:none;
+}
+.seal{
+  width:44px;height:44px;
+  background:#fff;border-radius:50%;
+  position:absolute; bottom:48px; left:50%;
+  transform:translateX(-50%);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer; animation:pulse 2s infinite;
+  box-shadow:0 10px 25px rgba(0,0,0,.4);
+  z-index:200;
+}
+.seal span{ color:#ff4f9a;font-size:18px }
+.open .flap{ transform:rotateX(160deg) }
+
+/* ===== POPUP ===== */
+.popup{
+  position:absolute;
+  background:#fff;color:#020617;
+  padding:22px 28px;border-radius:18px;
+  text-align:center;
+  box-shadow:0 40px 80px rgba(0,0,0,.6);
+  opacity:0; transform:translateY(30px) scale(.95);
+  transition:1s ease; z-index:300;
+  pointer-events:none;
+}
+.popup.show{ opacity:1; transform:translateY(0) scale(1); }
+.popup .main{ font-size:20px;font-weight:500 }
+
+/* ===== HEART RAIN ===== */
+.heart{
+  position:absolute;font-size:18px;
+  animation: heartFall linear forwards;
+  pointer-events:none;
+}
+@keyframes heartFall{
+  from{ transform:translateY(-20px); opacity:0 }
+  10%{ opacity:1 }
+  to{ transform:translateY(110vh); opacity:0 }
+}
+
+/* ===== ANIMATIONS ===== */
+@keyframes rise{ from{transform:translateY(220px);opacity:0} to{transform:translateY(0);opacity:1} }
+@keyframes pulse{
+  0%,100%{transform:translateX(-50%) scale(1)}
+  50%{transform:translateX(-50%) scale(1.1)}
+}
+</style>
+</head>
+
+<body>
+
+<div class="moon"></div>
+
+<div class="envelope-wrap" id="wrap">
+  <div class="envelope">
+    <div class="flap"></div>
+    <div class="seal" id="seal"><span>❤</span></div>
+  </div>
+</div>
+
+<div class="popup" id="popup">
+  <div class="main">Nee romba azhaga iruka ❤️</div>
+</div>
+
+<script>
+/* Stars */
+for(let i=0;i<80;i++){
+  const s=document.createElement("div");
+  s.className="star";
+  s.style.left=Math.random()*100+"vw";
+  s.style.top=Math.random()*100+"vh";
+  document.body.appendChild(s);
+}
+
+/* Click Logic */
+const seal=document.getElementById("seal");
+const wrap=document.getElementById("wrap");
+const popup=document.getElementById("popup");
+
+seal.onclick=()=>{
+  wrap.classList.add("open");
+  seal.style.display="none";
+  setTimeout(()=>popup.classList.add("show"),600);
+  setTimeout(()=>{
+    document.body.classList.add("love-mode");
+    heartRain();
+  },1200);
+};
+
+/* Heart Rain */
+function heartRain(){
+  const interval=setInterval(()=>{
+    const h=document.createElement("div");
+    h.className="heart";
+    h.innerHTML="❤";
+    h.style.left=Math.random()*100+"vw";
+    h.style.color=Math.random()>0.5?"#ff3d8b":"#ff6fae";
+    h.style.animationDuration=3+Math.random()*2+"s";
+    document.body.appendChild(h);
+    setTimeout(()=>h.remove(),5000);
+  },150);
+  setTimeout(()=>clearInterval(interval),4000);
+}
+</script>
+
+</body>
+</html>
